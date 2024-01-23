@@ -1,0 +1,96 @@
+version: "3.7"
+
+services:
+  npm:
+    image: node:18.19.0
+    entrypoint: npm
+    environment:
+      MYSQL_HOST: "mysql"
+      MYSQL_PORT: "3306"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    working_dir: /opt/primarybyte
+    volumes:
+      - .:/opt/primarybyte
+    profiles:
+      - npm
+
+  backend-express:
+    image: node:18.19.0
+    command: npm run local
+    environment:
+      BACKEND_HOST: "0.0.0.0"
+      MYSQL_HOST: "mysql"
+      MYSQL_PORT: "3306"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    ports:
+      - ${EXTERNAL_BACKEND_PORT}:${BACKEND_PORT}
+    working_dir: /opt/primarybyte/packages/backend-express
+    volumes:
+      - ./node_modules:/opt/primarybyte/node_modules
+      - ./packages:/opt/primarybyte/packages
+      - .env:/opt/primarybyte/.env
+    profiles:
+      - backend-express
+    depends_on:
+      - mysql
+      - redis
+
+  backend-nest:
+    image: node:18.19.0
+    command: npm run start:dev
+    environment:
+      BACKEND_HOST: "0.0.0.0"
+      MYSQL_HOST: "mysql"
+      MYSQL_PORT: "3306"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    ports:
+      - ${EXTERNAL_BACKEND_PORT}:${BACKEND_PORT}
+    working_dir: /opt/primarybyte/packages/backend-nest
+    volumes:
+      - ./node_modules:/opt/primarybyte/node_modules
+      - ./packages:/opt/primarybyte/packages
+      - .env:/opt/primarybyte/.env
+    profiles:
+      - backend-nest
+    depends_on:
+      - mysql
+      - redis
+
+  frontend:
+    image: node:18.19.0
+    command: npm start
+    environment:
+      REACT_APP_BACKEND_BASE_URL: "http://localhost:${EXTERNAL_BACKEND_PORT}"
+    ports:
+      - ${EXTERNAL_FRONTEND_PORT}:3000
+    working_dir: /opt/primarybyte/packages/frontend-react
+    volumes:
+      - ./node_modules:/opt/primarybyte/node_modules
+      - ./packages:/opt/primarybyte/packages
+    profiles:
+      - frontend
+
+  mysql:
+    image: mysql:8.0.32
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/sample.sql
+    ports:
+      - ${EXTERNAL_MYSQL_PORT}:3306
+    profiles:
+      - infra
+
+  redis:
+    image: redis:7.0.10
+    ports:
+      - ${EXTERNAL_REDIS_PORT}:6379
+    profiles:
+      - infra

@@ -1,0 +1,8 @@
+{
+  "name": "test-day",
+  "workspaces": [
+    "packages/backend-express",
+    "packages/backend-nest",
+    "packages/frontend-react"
+  ]
+}
