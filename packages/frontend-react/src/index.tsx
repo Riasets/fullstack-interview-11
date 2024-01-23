@@ -2,10 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import './index.module.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+// Нет времени разбираться со сменой id после компиляции css
+(document.getElementById('root') as HTMLElement).setAttribute('style', 'height: 100%;')
 root.render(
   <React.StrictMode>
     <App />
